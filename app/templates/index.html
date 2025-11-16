@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Crystal Game{% endblock %}
+
+{% block content %}
+<div class="screen crystal-screen">
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <button class="btn-close" onclick="closeApp()" data-icon="close"></button>
+        <div class="currency-display">
+            <span class="currency-item">
+                <span class="currency-icon" data-icon="diamond"></span>
+                <span id="diamond-balance">0</span> +
+            </span>
+            <span class="currency-item">
+                <span class="currency-icon" data-icon="bat"></span>
+                <span id="bat-balance">0</span>
+            </span>
+        </div>
+        <div class="top-actions">
+            <button class="icon-btn" data-icon="chevronDown"></button>
+            <button class="icon-btn" data-icon="menu"></button>
+        </div>
+    </div>
+
+    <!-- Wins Section -->
+    <div class="wins-section">
+        <h2 class="section-title">Wins</h2>
+        <button class="btn-close-small" onclick="closeWins()" data-icon="close"></button>
+        <div class="wins-carousel" id="winsCarousel">
+            <!-- Wins will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Main Crystal -->
+    <div class="crystal-container">
+        <div class="crystal-wrapper">
+            <img src="{{ url_for('static', filename='images/crystal-placeholder.png') }}" 
+                 alt="Crystal" 
+                 class="crystal-image"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <div class="crystal-placeholder" style="display:none;">
+                <div class="crystal-glow"></div>
+                <div class="crystal-shape"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- What's Inside Section -->
+    <div class="whats-inside">
+        <button class="expand-btn" onclick="toggleWhatsInside()">
+            What's inside <span class="chevron" data-icon="chevronUp"></span>
+        </button>
+        <div class="prizes-list" id="prizesList" style="display:none;">
+            <!-- Prizes will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Open Button -->
+    <div class="open-section">
+        <button class="btn-open" id="btnOpen" onclick="openCrystal()">
+            Open for <span class="diamond-icon" data-icon="diamond"></span> <span id="crystal-cost">6</span>
+        </button>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="navigateTo('/')">
+            <span class="nav-icon" data-icon="home"></span>
+        </button>
+        <button class="nav-item" onclick="navigateTo('/profile')">
+            <span class="nav-icon" data-icon="inventory"></span>
+        </button>
+        <button class="nav-item" onclick="navigateTo('/tasks')">
+            <span class="nav-icon" data-icon="target"></span>
+        </button>
+        <button class="nav-item" onclick="navigateTo('/leaderboard')">
+            <span class="nav-icon" data-icon="crown"></span>
+        </button>
+    </nav>
+</div>
+
+<!-- Navigation Arrows -->
+<button class="nav-arrow nav-arrow-left" onclick="navigateCarousel(-1)" data-icon="arrowLeft"></button>
+<button class="nav-arrow nav-arrow-right" onclick="navigateCarousel(1)" data-icon="arrowRight"></button>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let currentUser = null;
+    let crystalCost = 6;
+
+    // Initialize Telegram WebApp
+    if (window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        
+        // Get user from Telegram
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            authenticateUser(tg.initData);
+        }
+    }
+
+    async function authenticateUser(initData) {
+        try {
+            const response = await fetch('/auth/telegram', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({initData: initData})
+            });
+            const data = await response.json();
+            if (data.ok) {
+                currentUser = data.user;
+                loadWins();
+                loadPrizes();
+            }
+        } catch (error) {
+            console.error('Auth error:', error);
+        }
+    }
+
+    async function loadWins() {
+        try {
+            const response = await fetch('/wins');
+            const data = await response.json();
+            const carousel = document.getElementById('winsCarousel');
+            carousel.innerHTML = '';
+            
+            data.wins.forEach(win => {
+                const card = document.createElement('div');
+                card.className = 'win-card';
+                card.innerHTML = `
+                    <div class="win-avatar">${win.user.username?.[0] || '?'}</div>
+                    <div class="win-info">
+                        <div class="win-name">${win.user.username || 'Anonymous'}</div>
+                        <div class="win-prize">${win.prize.name}</div>
+                    </div>
+                `;
+                carousel.appendChild(card);
+            });
+            // Replace icons in newly added content
+            replaceEmojisWithIcons();
+        } catch (error) {
+            console.error('Load wins error:', error);
+        }
+    }
+
+    async function loadPrizes() {
+        try {
+            const response = await fetch('/prizes');
+            const data = await response.json();
+            const list = document.getElementById('prizesList');
+            list.innerHTML = '';
+            
+            data.prizes.forEach(prize => {
+                const item = document.createElement('div');
+                item.className = 'prize-item';
+                const iconType = prize.type === 'ton' ? 'money' : prize.type === 'coupon' ? 'coupon' : 'star';
+                item.innerHTML = `
+                    <span class="prize-icon" data-icon="${iconType}"></span>
+                    <span class="prize-name">${prize.name}</span>
+                    <span class="prize-prob">${(prize.probability * 100).toFixed(2)}%</span>
+                `;
+                list.appendChild(item);
+            });
+            // Replace icons in newly added content
+            replaceEmojisWithIcons();
+        } catch (error) {
+            console.error('Load prizes error:', error);
+        }
+    }
+
+    function toggleWhatsInside() {
+        const list = document.getElementById('prizesList');
+        list.style.display = list.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function openCrystal() {
+        if (!currentUser) {
+            showToast('Please authenticate first');
+            return;
+        }
+
+        const btn = document.getElementById('btnOpen');
+        btn.disabled = true;
+        btn.textContent = 'Opening...';
+
+        try {
+            const response = await fetch('/game/play', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+            const data = await response.json();
+            
+            if (data.ok) {
+                if (data.result.won) {
+                    showToast(`You won: ${data.result.prize_name}!`, 'success');
+                    if (data.claim_id) {
+                        showToast('Claim created. Admin will process payout.', 'info');
+                    }
+                    loadWins();
+                } else {
+                    showToast('No prize this time. Try again!', 'info');
+                }
+            } else {
+                showToast(data.error || 'Error opening crystal', 'error');
+            }
+        } catch (error) {
+            showToast('Network error', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `Open for <span class="diamond-icon" data-icon="diamond"></span> <span id="crystal-cost">${crystalCost}</span>`;
+            replaceEmojisWithIcons();
+        }
+    }
+
+    function closeApp() {
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.close();
+        }
+    }
+
+    function closeWins() {
+        document.querySelector('.wins-section').style.display = 'none';
+    }
+
+    function navigateTo(path) {
+        window.location.href = path;
+    }
+
+    function navigateCarousel(direction) {
+        // Implement carousel navigation if needed
+    }
+
+    function showToast(message, type = 'info') {
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.showPopup({
+                title: type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Info',
+                message: message,
+                buttons: [{type: 'ok'}]
+            });
+        } else {
+            alert(message);
+        }
+    }
+</script>
+{% endblock %}
+

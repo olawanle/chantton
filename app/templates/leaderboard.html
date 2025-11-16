@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Leaderboard{% endblock %}
+
+{% block content %}
+<div class="screen leaderboard-screen">
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <button class="btn-close" onclick="closeApp()" data-icon="close"></button>
+        <div class="currency-display">
+            <span class="currency-item">
+                <span class="currency-icon" data-icon="diamond"></span>
+                <span id="diamond-balance">0</span> +
+            </span>
+        </div>
+        <div class="top-actions">
+            <button class="icon-btn" data-icon="chevronDown"></button>
+            <button class="icon-btn" data-icon="menu"></button>
+        </div>
+    </div>
+
+    <!-- Leaderboard Header -->
+    <div class="leaderboard-header">
+        <div class="crown-icon" data-icon="crown"></div>
+        <h1 class="leaderboard-title">Leaderboard</h1>
+        <p class="leaderboard-subtitle">Compete, climb the ranks, and earn rewards!</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="leaderboard-tabs">
+        <button class="leaderboard-tab active" onclick="switchPeriod('alltime')">All Time</button>
+        <button class="leaderboard-tab" onclick="switchPeriod('season5')">Season 5</button>
+        <button class="leaderboard-tab" onclick="switchPeriod('season4')">Season 4</button>
+        <button class="leaderboard-tab" onclick="switchPeriod('all')">See All</button>
+    </div>
+
+    <!-- Leaderboard List -->
+    <div class="leaderboard-list" id="leaderboardList">
+        <!-- Leaderboard entries will be loaded here -->
+    </div>
+
+    <!-- Your Rank (Bottom) -->
+    <div class="your-rank" id="yourRank">
+        <!-- Your rank will be loaded here -->
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item" onclick="navigateTo('/')">
+            <span class="nav-icon" data-icon="home"></span>
+        </button>
+        <button class="nav-item" onclick="navigateTo('/profile')">
+            <span class="nav-icon" data-icon="inventory"></span>
+        </button>
+        <button class="nav-item" onclick="navigateTo('/tasks')">
+            <span class="nav-icon" data-icon="target"></span>
+        </button>
+        <button class="nav-item active" onclick="navigateTo('/leaderboard')">
+            <span class="nav-icon" data-icon="crown"></span>
+        </button>
+    </nav>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let currentUser = null;
+    let currentPeriod = 'alltime';
+
+    // Initialize Telegram WebApp
+    if (window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            authenticateUser(tg.initData);
+        }
+    }
+
+    async function authenticateUser(initData) {
+        try {
+            const response = await fetch('/auth/telegram', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({initData: initData})
+            });
+            const data = await response.json();
+            if (data.ok) {
+                currentUser = data.user;
+                loadLeaderboard();
+            }
+        } catch (error) {
+            console.error('Auth error:', error);
+        }
+    }
+
+    async function loadLeaderboard() {
+        try {
+            // For now, use wins data as leaderboard
+            const response = await fetch('/wins');
+            const data = await response.json();
+            
+            // Group by user and calculate scores
+            const userScores = {};
+            data.wins.forEach(win => {
+                const uid = win.user.id;
+                if (!userScores[uid]) {
+                    userScores[uid] = {
+                        user: win.user,
+                        wins: 0,
+                        totalValue: 0
+                    };
+                }
+                userScores[uid].wins += 1;
+                // Mock value calculation
+                userScores[uid].totalValue += Math.random() * 1000 + 500;
+            });
+
+            const sorted = Object.values(userScores)
+                .sort((a, b) => b.totalValue - a.totalValue)
+                .slice(0, 10);
+
+            const list = document.getElementById('leaderboardList');
+            list.innerHTML = '';
+
+            sorted.forEach((entry, index) => {
+                const rank = index + 1;
+                const colors = ['#FFD700', '#FF69B4', '#9370DB', '#4169E1'];
+                const color = colors[index] || '#666';
+                
+                const item = document.createElement('div');
+                item.className = 'leaderboard-entry';
+                item.innerHTML = `
+                    <div class="rank-number" style="color: ${color}">${rank}</div>
+                    <div class="rank-avatar">${entry.user.username?.[0] || '?'}</div>
+                    <div class="rank-info">
+                        <div class="rank-name">${entry.user.username || entry.user.display_name || 'Anonymous'}</div>
+                        <div class="rank-scores">
+                            <span>${entry.wins} <span data-icon="star"></span></span>
+                            <span>${entry.totalValue.toFixed(2)} <span data-icon="diamond"></span></span>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+            // Replace icons in newly added content
+            replaceEmojisWithIcons();
+
+            // Show your rank
+            if (currentUser) {
+                const yourEntry = sorted.findIndex(e => e.user.id === currentUser.id);
+                const yourRankDiv = document.getElementById('yourRank');
+                if (yourEntry >= 0) {
+                    yourRankDiv.innerHTML = `
+                        <div class="your-rank-box">
+                            <div class="rank-number">#${yourEntry + 1}</div>
+                            <div class="rank-avatar">${currentUser.username?.[0] || '?'}</div>
+                            <div class="rank-info">
+                                <div class="rank-name">You</div>
+                                <div class="rank-scores">
+                                    <span>${sorted[yourEntry].wins} <span data-icon="star"></span></span>
+                                    <span>${sorted[yourEntry].totalValue.toFixed(2)} <span data-icon="diamond"></span></span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    yourRankDiv.innerHTML = `
+                        <div class="your-rank-box">
+                            <div class="rank-number">#?</div>
+                            <div class="rank-avatar">${currentUser.username?.[0] || '?'}</div>
+                            <div class="rank-info">
+                                <div class="rank-name">You</div>
+                                <div class="rank-scores">
+                                    <span>0 <span data-icon="star"></span></span>
+                                    <span>0 <span data-icon="diamond"></span></span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        } catch (error) {
+            console.error('Load leaderboard error:', error);
+        }
+    }
+
+    function switchPeriod(period) {
+        currentPeriod = period;
+        document.querySelectorAll('.leaderboard-tab').forEach((tab, idx) => {
+            if ((period === 'alltime' && idx === 0) ||
+                (period === 'season5' && idx === 1) ||
+                (period === 'season4' && idx === 2) ||
+                (period === 'all' && idx === 3)) {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+        });
+        loadLeaderboard();
+    }
+
+    function closeApp() {
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.close();
+        }
+    }
+
+    function navigateTo(path) {
+        window.location.href = path;
+    }
+</script>
+{% endblock %}
+

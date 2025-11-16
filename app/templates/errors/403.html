@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}403 - Forbidden{% endblock %}
+
+{% block content %}
+<div class="screen" style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
+    <div style="text-align: center;">
+        <h1 style="font-size: 72px; margin-bottom: 20px;">403</h1>
+        <h2 style="margin-bottom: 20px;">Forbidden</h2>
+        <p style="opacity: 0.7; margin-bottom: 30px;">You don't have permission to access this resource.</p>
+        <button onclick="window.location.href='/'" style="padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; color: #fff; cursor: pointer; font-size: 16px;">
+            Go Home
+        </button>
+    </div>
+</div>
+{% endblock %}
+

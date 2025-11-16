@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="screen profile-screen">
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <button class="btn-close" onclick="closeApp()" data-icon="close"></button>
+        <div class="currency-display">
+            <span class="currency-item">
+                <span class="currency-icon" data-icon="diamond"></span>
+                <span id="diamond-balance">0</span> +
+            </span>
+        </div>
+        <div class="top-actions">
+            <span class="lang-selector"><span data-icon="globe"></span> Eng</span>
+            <button class="icon-btn" data-icon="chevronDown"></button>
+            <button class="icon-btn" data-icon="menu"></button>
+        </div>
+    </div>
+
+    <!-- Profile Section -->
+    <div class="profile-section">
+        <div class="profile-avatar" id="profileAvatar">G</div>
+        <div class="profile-name" id="profileName">Loading...</div>
+        <div class="profile-stats" id="profileStats">#2k+</div>
+        <button class="btn-connect" onclick="connectWallet()">
+            Connect <span class="diamond-icon" data-icon="diamond"></span>
+        </button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('collection')">Collection</button>
+        <button class="tab" onclick="switchTab('activity')">Activity</button>
+    </div>
+
+    <!-- Collection Content -->
+    <div class="collection-content" id="collectionContent">
+        <h3 class="content-title">Collection</h3>
+        <div class="collection-grid" id="collectionGrid">
+            <!-- Collection items will be loaded here -->
+            <p class="empty-state">No items in collection yet</p>
+        </div>
+    </div>
+
+    <!-- Activity Content (hidden by default) -->
+    <div class="activity-content" id="activityContent" style="display:none;">
+        <h3 class="content-title">Activity</h3>
+        <div class="activity-list" id="activityList">
+            <!-- Activity items will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item" onclick="navigateTo('/')">
+            <span class="nav-icon" data-icon="home"></span>
+        </button>
+        <button class="nav-item active" onclick="navigateTo('/profile')">
+            <span class="nav-icon" data-icon="inventory"></span>
+        </button>
+        <button class="nav-item" onclick="navigateTo('/tasks')">
+            <span class="nav-icon" data-icon="target"></span>
+        </button>
+        <button class="nav-item" onclick="navigateTo('/leaderboard')">
+            <span class="nav-icon" data-icon="crown"></span>
+        </button>
+    </nav>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let currentUser = null;
+
+    // Initialize Telegram WebApp
+    if (window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            authenticateUser(tg.initData);
+        }
+    }
+
+    async function authenticateUser(initData) {
+        try {
+            const response = await fetch('/auth/telegram', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({initData: initData})
+            });
+            const data = await response.json();
+            if (data.ok) {
+                currentUser = data.user;
+                loadProfile();
+                loadCollection();
+            }
+        } catch (error) {
+            console.error('Auth error:', error);
+        }
+    }
+
+    function loadProfile() {
+        if (currentUser) {
+            document.getElementById('profileName').textContent = currentUser.display_name || currentUser.username || 'User';
+            document.getElementById('profileAvatar').textContent = (currentUser.username || currentUser.display_name || 'U')[0].toUpperCase();
+        }
+    }
+
+    async function loadCollection() {
+        if (!currentUser) return;
+        
+        try {
+            const response = await fetch(`/game/user/${currentUser.id}/history`);
+            const data = await response.json();
+            
+            const grid = document.getElementById('collectionGrid');
+            grid.innerHTML = '';
+            
+            const wins = data.games.filter(g => g.result && g.result.won);
+            if (wins.length === 0) {
+                grid.innerHTML = '<p class="empty-state">No items in collection yet</p>';
+                return;
+            }
+            
+            wins.forEach(game => {
+                const item = document.createElement('div');
+                item.className = 'collection-item';
+                const iconType = game.result.prize_type === 'ton' ? 'money' : game.result.prize_type === 'coupon' ? 'coupon' : 'star';
+                item.innerHTML = `
+                    <div class="item-icon" data-icon="${iconType}"></div>
+                    <div class="item-name">${game.result.prize_name || 'Prize'}</div>
+                `;
+                grid.appendChild(item);
+            });
+            // Replace icons in newly added content
+            replaceEmojisWithIcons();
+        } catch (error) {
+            console.error('Load collection error:', error);
+        }
+    }
+
+    async function loadActivity() {
+        if (!currentUser) return;
+        
+        try {
+            const response = await fetch(`/game/user/${currentUser.id}/history`);
+            const data = await response.json();
+            
+            const list = document.getElementById('activityList');
+            list.innerHTML = '';
+            
+            data.games.slice(0, 20).forEach(game => {
+                const item = document.createElement('div');
+                item.className = 'activity-item';
+                const date = new Date(game.created_at);
+                const iconType = game.result.won ? 'celebration' : 'dice';
+                item.innerHTML = `
+                    <div class="activity-icon" data-icon="${iconType}"></div>
+                    <div class="activity-info">
+                        <div class="activity-text">${game.result.won ? `Won: ${game.result.prize_name}` : 'Played game'}</div>
+                        <div class="activity-date">${date.toLocaleDateString()}</div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+            // Replace icons in newly added content
+            replaceEmojisWithIcons();
+        } catch (error) {
+            console.error('Load activity error:', error);
+        }
+    }
+
+    function switchTab(tab) {
+        if (tab === 'collection') {
+            document.getElementById('collectionContent').style.display = 'block';
+            document.getElementById('activityContent').style.display = 'none';
+            document.querySelectorAll('.tab')[0].classList.add('active');
+            document.querySelectorAll('.tab')[1].classList.remove('active');
+        } else {
+            document.getElementById('collectionContent').style.display = 'none';
+            document.getElementById('activityContent').style.display = 'block';
+            document.querySelectorAll('.tab')[0].classList.remove('active');
+            document.querySelectorAll('.tab')[1].classList.add('active');
+            loadActivity();
+        }
+    }
+
+    function connectWallet() {
+        showToast('Wallet connection coming soon!', 'info');
+    }
+
+    function closeApp() {
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.close();
+        }
+    }
+
+    function navigateTo(path) {
+        window.location.href = path;
+    }
+
+    function showToast(message, type = 'info') {
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.showPopup({
+                title: type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Info',
+                message: message,
+                buttons: [{type: 'ok'}]
+            });
+        } else {
+            alert(message);
+        }
+    }
+</script>
+{% endblock %}
+

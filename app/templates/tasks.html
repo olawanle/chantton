@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Tasks{% endblock %}
+
+{% block content %}
+<div class="screen tasks-screen">
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <button class="btn-close" onclick="closeApp()" data-icon="close"></button>
+        <div class="currency-display">
+            <span class="currency-item">
+                <span class="currency-icon" data-icon="diamond"></span>
+                <span id="diamond-balance">0</span> +
+            </span>
+        </div>
+        <div class="top-actions">
+            <button class="icon-btn" data-icon="chevronDown"></button>
+            <button class="icon-btn" data-icon="menu"></button>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('tasks')">Tasks</button>
+        <button class="tab" onclick="switchTab('referrals')">Referrals</button>
+    </div>
+
+    <!-- Tasks Content -->
+    <div class="tasks-content" id="tasksContent">
+        <div class="tasks-banner">
+            <div class="banner-icon" data-icon="sparkle"></div>
+            <h2 class="banner-title">Feel The Magic</h2>
+            <p class="banner-desc">Complete tasks, get flying peps and open a free crystal!</p>
+        </div>
+
+        <div class="tasks-list" id="tasksList">
+            <!-- Tasks will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Referrals Content (hidden by default) -->
+    <div class="referrals-content" id="referralsContent" style="display:none;">
+        <div class="referrals-banner">
+            <h2>Refer Friends</h2>
+            <p>Share your referral link and earn rewards!</p>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item" onclick="navigateTo('/')">
+            <span class="nav-icon" data-icon="home"></span>
+        </button>
+        <button class="nav-item" onclick="navigateTo('/profile')">
+            <span class="nav-icon" data-icon="inventory"></span>
+        </button>
+        <button class="nav-item active" onclick="navigateTo('/tasks')">
+            <span class="nav-icon" data-icon="target"></span>
+        </button>
+        <button class="nav-item" onclick="navigateTo('/leaderboard')">
+            <span class="nav-icon" data-icon="crown"></span>
+        </button>
+    </nav>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let currentUser = null;
+
+    // Initialize Telegram WebApp
+    if (window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            authenticateUser(tg.initData);
+        }
+    }
+
+    async function authenticateUser(initData) {
+        try {
+            const response = await fetch('/auth/telegram', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({initData: initData})
+            });
+            const data = await response.json();
+            if (data.ok) {
+                currentUser = data.user;
+                loadTasks();
+            }
+        } catch (error) {
+            console.error('Auth error:', error);
+        }
+    }
+
+    async function loadTasks() {
+        try {
+            const response = await fetch('/tasks');
+            const data = await response.json();
+            const list = document.getElementById('tasksList');
+            list.innerHTML = '';
+            
+            data.tasks.forEach(task => {
+                const item = document.createElement('div');
+                item.className = 'task-item';
+                item.innerHTML = `
+                    <div class="task-icon" data-icon="airplane"></div>
+                    <div class="task-info">
+                        <div class="task-name">${task.name}</div>
+                        <div class="task-reward">+${task.reward_points} <span data-icon="diamond"></span></div>
+                    </div>
+                    <button class="btn-check" ${task.completed ? 'disabled' : ''} 
+                            onclick="checkTask(${task.id}, this)">
+                        ${task.completed ? '<span data-icon="check"></span>' : 'Check'}
+                    </button>
+                `;
+                list.appendChild(item);
+            });
+            // Replace icons in newly added content
+            replaceEmojisWithIcons();
+        } catch (error) {
+            console.error('Load tasks error:', error);
+        }
+    }
+
+    async function checkTask(taskId, btn) {
+        if (!currentUser) {
+            showToast('Please authenticate first');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Checking...';
+
+        try {
+            const response = await fetch('/tasks/check', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({task_id: taskId})
+            });
+            const data = await response.json();
+            
+            if (data.ok) {
+            showToast(`Task completed! +${data.reward_points}`, 'success');
+            btn.disabled = true;
+            btn.innerHTML = '<span data-icon="check"></span>';
+            replaceEmojisWithIcons();
+                loadTasks();
+            } else {
+                showToast(data.error || 'Task verification failed', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Check';
+            }
+        } catch (error) {
+            showToast('Network error', 'error');
+            btn.disabled = false;
+            btn.textContent = 'Check';
+        }
+    }
+
+    function switchTab(tab) {
+        if (tab === 'tasks') {
+            document.getElementById('tasksContent').style.display = 'block';
+            document.getElementById('referralsContent').style.display = 'none';
+            document.querySelectorAll('.tab')[0].classList.add('active');
+            document.querySelectorAll('.tab')[1].classList.remove('active');
+        } else {
+            document.getElementById('tasksContent').style.display = 'none';
+            document.getElementById('referralsContent').style.display = 'block';
+            document.querySelectorAll('.tab')[0].classList.remove('active');
+            document.querySelectorAll('.tab')[1].classList.add('active');
+        }
+    }
+
+    function closeApp() {
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.close();
+        }
+    }
+
+    function navigateTo(path) {
+        window.location.href = path;
+    }
+
+    function showToast(message, type = 'info') {
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.showPopup({
+                title: type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Info',
+                message: message,
+                buttons: [{type: 'ok'}]
+            });
+        } else {
+            alert(message);
+        }
+    }
+</script>
+{% endblock %}
+

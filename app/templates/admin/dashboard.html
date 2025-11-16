@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <h1>Admin Dashboard</h1>
+            <input type="text" id="adminToken" placeholder="Admin Token" class="token-input">
+        </header>
+
+        <div class="admin-tabs">
+            <button class="admin-tab active" onclick="switchAdminTab('claims')">Claims</button>
+            <button class="admin-tab" onclick="switchAdminTab('prizes')">Prizes</button>
+            <button class="admin-tab" onclick="switchAdminTab('audit')">Audit Log</button>
+        </div>
+
+        <!-- Claims Tab -->
+        <div class="admin-content" id="claimsTab">
+            <h2>Pending Claims</h2>
+            <div class="claims-list" id="claimsList">
+                <!-- Claims will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Prizes Tab -->
+        <div class="admin-content" id="prizesTab" style="display:none;">
+            <h2>Prizes</h2>
+            <button class="btn-add" onclick="showAddPrizeForm()">Add Prize</button>
+            <div class="prizes-list" id="prizesList">
+                <!-- Prizes will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Audit Tab -->
+        <div class="admin-content" id="auditTab" style="display:none;">
+            <h2>Audit Log</h2>
+            <div class="audit-list" id="auditList">
+                <!-- Audit logs will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Prize Modal -->
+    <div class="modal" id="prizeModal" style="display:none;">
+        <div class="modal-content">
+            <h3>Add/Edit Prize</h3>
+            <form id="prizeForm">
+                <input type="hidden" id="prizeId">
+                <input type="text" id="prizeName" placeholder="Prize Name" required>
+                <select id="prizeType" required>
+                    <option value="ton">TON</option>
+                    <option value="coupon">Coupon</option>
+                    <option value="points">Points</option>
+                </select>
+                <input type="number" id="prizeProbability" placeholder="Probability (0-1)" step="0.0001" min="0" max="1" required>
+                <textarea id="prizeMeta" placeholder='JSON Meta (e.g. {"amount": 10, "payout_address": "..."})'></textarea>
+                <div class="modal-actions">
+                    <button type="submit">Save</button>
+                    <button type="button" onclick="closePrizeModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>
+

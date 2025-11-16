@@ -1,0 +1,147 @@
+/* Custom SVG Icons */
+.icon {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+    fill: currentColor;
+}
+
+.icon-sm {
+    width: 0.875em;
+    height: 0.875em;
+}
+
+.icon-lg {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.icon-xl {
+    width: 2em;
+    height: 2em;
+}
+
+/* Icon definitions */
+.icon-diamond {
+    width: 1.2em;
+    height: 1.2em;
+}
+
+.icon-bat {
+    width: 1.2em;
+    height: 1.2em;
+}
+
+.icon-crown {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.icon-home {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.icon-inventory {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.icon-target {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.icon-close {
+    width: 1.2em;
+    height: 1.2em;
+}
+
+.icon-chevron-down {
+    width: 1em;
+    height: 1em;
+}
+
+.icon-menu {
+    width: 1.2em;
+    height: 1.2em;
+}
+
+.icon-airplane {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.icon-check {
+    width: 1em;
+    height: 1em;
+}
+
+.icon-crystal {
+    width: 2em;
+    height: 2em;
+}
+
+.icon-ton {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.icon-coupon {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.icon-points {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.icon-globe {
+    width: 1.2em;
+    height: 1.2em;
+}
+
+.icon-arrow-left,
+.icon-arrow-right {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.icon-star {
+    width: 1.2em;
+    height: 1.2em;
+}
+
+.icon-celebration {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.icon-dice {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.icon-money {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.icon-sparkle {
+    width: 3em;
+    height: 3em;
+}
+
+.banner-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.banner-icon .icon {
+    width: 4em;
+    height: 4em;
+}
+
