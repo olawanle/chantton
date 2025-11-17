@@ -22,9 +22,12 @@
 
     <!-- Profile Section -->
     <div class="profile-section">
-        <div class="profile-avatar" id="profileAvatar">G</div>
-        <div class="profile-name" id="profileName">Loading...</div>
+        <div class="profile-avatar-wrapper">
+            <div class="profile-avatar" id="profileAvatar">G</div>
+            <div class="profile-avatar-label">CHARLI ZANDER</div>
+        </div>
         <div class="profile-stats" id="profileStats">#2k+</div>
+        <div class="profile-name" id="profileName">Loading...</div>
         <button class="btn-connect" onclick="connectWallet()">
             Connect <span class="diamond-icon" data-icon="diamond"></span>
         </button>
@@ -106,8 +109,10 @@
 
     function loadProfile() {
         if (currentUser) {
-            document.getElementById('profileName').textContent = currentUser.display_name || currentUser.username || 'User';
-            document.getElementById('profileAvatar').textContent = (currentUser.username || currentUser.display_name || 'U')[0].toUpperCase();
+            const name = currentUser.display_name || currentUser.username || 'User';
+            document.getElementById('profileName').textContent = name;
+            document.getElementById('profileAvatar').textContent = name[0].toUpperCase();
+            // Keep the label as is for now
         }
     }
 

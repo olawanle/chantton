@@ -23,13 +23,30 @@
     <script>
         // Ensure icons are replaced after all scripts load
         window.addEventListener('load', function() {
-            if (typeof replaceEmojisWithIcons === 'function') {
-                replaceEmojisWithIcons();
-            }
-            if (typeof replaceAllEmojis === 'function') {
-                replaceAllEmojis();
+            try {
+                if (typeof replaceEmojisWithIcons === 'function') {
+                    replaceEmojisWithIcons();
+                }
+                if (typeof replaceAllEmojis === 'function') {
+                    replaceAllEmojis();
+                }
+            } catch (error) {
+                console.error('Error initializing icons:', error);
             }
         });
+        
+        // Also try on DOMContentLoaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                try {
+                    if (typeof replaceEmojisWithIcons === 'function') {
+                        replaceEmojisWithIcons();
+                    }
+                } catch (error) {
+                    console.error('Error initializing icons on DOMContentLoaded:', error);
+                }
+            });
+        }
     </script>
     {% block extra_scripts %}{% endblock %}
 </body>

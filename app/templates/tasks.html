@@ -41,8 +41,47 @@
     <!-- Referrals Content (hidden by default) -->
     <div class="referrals-content" id="referralsContent" style="display:none;">
         <div class="referrals-banner">
-            <h2>Refer Friends</h2>
-            <p>Share your referral link and earn rewards!</p>
+            <div class="referrals-icon" data-icon="percent"></div>
+            <h2 class="referrals-title">Invite and Earn</h2>
+            <p class="referrals-subtitle">Invite friends and earn from their earnings.</p>
+        </div>
+
+        <div class="level-card">
+            <div class="level-title">level 1</div>
+            <div class="level-info">
+                <span data-icon="money"></span>
+                <span>You receive <strong>10%</strong> of the income</span>
+                <button class="icon-btn" style="margin-left: auto; opacity: 0.5;" data-icon="close"></button>
+            </div>
+            
+            <div class="progress-section">
+                <div class="progress-label">
+                    <span>Volume <span data-icon="diamond"></span> <span id="volume-current">0</span></span>
+                    <span id="volume-target">50</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="volume-progress" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="progress-section">
+                <div class="progress-label">
+                    <span>Referrals <span data-icon="users"></span> <span id="referrals-current">0</span></span>
+                    <span id="referrals-target">10</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="referrals-progress" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-invite" onclick="inviteFriends()">Invite</button>
+
+        <div class="balance-section">
+            <div class="balance-title">Balance</div>
+            <div style="font-size: 24px; font-weight: bold; margin-top: 8px;">
+                0 <span data-icon="diamond"></span>
+            </div>
         </div>
     </div>
 
@@ -110,7 +149,7 @@
                     <div class="task-icon" data-icon="airplane"></div>
                     <div class="task-info">
                         <div class="task-name">${task.name}</div>
-                        <div class="task-reward">+${task.reward_points} <span data-icon="diamond"></span></div>
+                        <div class="task-reward">+${task.reward_points} <span data-icon="bat"></span></div>
                     </div>
                     <button class="btn-check" ${task.completed ? 'disabled' : ''} 
                             onclick="checkTask(${task.id}, this)">
@@ -183,6 +222,22 @@
 
     function navigateTo(path) {
         window.location.href = path;
+    }
+
+    function inviteFriends() {
+        if (window.Telegram && window.Telegram.WebApp) {
+            const referralLink = `https://t.me/${window.Telegram.WebApp.initDataUnsafe.user?.username || 'your_bot'}?start=ref_${currentUser?.id || '0'}`;
+            window.Telegram.WebApp.showPopup({
+                title: 'Invite Friends',
+                message: `Share this link: ${referralLink}`,
+                buttons: [
+                    {type: 'default', text: 'Copy Link'},
+                    {type: 'cancel'}
+                ]
+            });
+        } else {
+            showToast('Referral feature coming soon!', 'info');
+        }
     }
 
     function showToast(message, type = 'info') {

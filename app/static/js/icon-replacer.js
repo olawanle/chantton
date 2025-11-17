@@ -27,9 +27,11 @@
     };
     
     function replaceAllEmojis() {
-        if (typeof renderIcon !== 'function') {
+        if (typeof window.renderIcon !== 'function' && typeof renderIcon !== 'function') {
             return; // Icons.js not loaded yet
         }
+        
+        const renderIconFn = window.renderIcon || renderIcon;
         
         // Replace in all elements
         Object.entries(emojiMap).forEach(([emoji, config]) => {
@@ -39,11 +41,11 @@
                     if (!el.hasAttribute('data-icon')) {
                         el.setAttribute('data-icon', config.icon);
                     }
-                    if (typeof replaceEmojisWithIcons === 'function') {
+                    if (typeof window.replaceEmojisWithIcons === 'function' || typeof replaceEmojisWithIcons === 'function') {
                         // Use the main replacement function
                         const iconName = el.getAttribute('data-icon');
-                        if (iconName && typeof renderIcon === 'function') {
-                            el.innerHTML = renderIcon(iconName);
+                        if (iconName && renderIconFn) {
+                            el.innerHTML = renderIconFn(iconName);
                         }
                     }
                 }
@@ -82,8 +84,8 @@
                             if (index < parts.length - 1) {
                                 const span = document.createElement('span');
                                 span.setAttribute('data-icon', config.icon);
-                                if (typeof renderIcon === 'function') {
-                                    span.innerHTML = renderIcon(config.icon);
+                                if (renderIconFn) {
+                                    span.innerHTML = renderIconFn(config.icon);
                                 }
                                 fragment.appendChild(span);
                             }
@@ -117,17 +119,24 @@
     setInterval(runReplacement, 1000);
     
     // Observe DOM changes
-    if (window.MutationObserver) {
-        const observer = new MutationObserver(() => {
-            setTimeout(runReplacement, 50);
-        });
-        
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true,
-            characterData: true
-        });
+    function setupObserver() {
+        if (window.MutationObserver && document.body) {
+            const observer = new MutationObserver(() => {
+                setTimeout(runReplacement, 50);
+            });
+            
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
+        } else if (document.readyState === 'loading') {
+            // Retry when DOM is ready
+            document.addEventListener('DOMContentLoaded', setupObserver);
+        }
     }
+    
+    setupObserver();
     
     // Export function for manual calls
     window.replaceAllEmojis = replaceAllEmojis;

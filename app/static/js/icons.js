@@ -96,6 +96,14 @@ const Icons = {
     
     sparkle: `<svg class="icon icon-sparkle" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+    </svg>`,
+    
+    percent: `<svg class="icon icon-percent" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M7.5 4C5.57 4 4 5.57 4 7.5S5.57 11 7.5 11 11 9.43 11 7.5 9.43 4 7.5 4zm0 5C6.67 9 6 8.33 6 7.5S6.67 6 7.5 6 9 6.67 9 7.5 8.33 9 7.5 9zm9 4c-1.93 0-3.5 1.57-3.5 3.5s1.57 3.5 3.5 3.5 3.5-1.57 3.5-3.5-1.57-3.5-3.5-3.5zm0 5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5.41 20L4 18.59 18.59 4 20 5.41 5.41 20z"/>
+    </svg>`,
+    
+    users: `<svg class="icon icon-users" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
     </svg>`
 };
 
@@ -103,6 +111,9 @@ const Icons = {
 function renderIcon(name) {
     return Icons[name] || '';
 }
+
+// Export to global scope
+window.renderIcon = renderIcon;
 
 // Function to replace emoji with icons in DOM
 function replaceEmojisWithIcons() {
@@ -202,6 +213,9 @@ function replaceEmojisWithIcons() {
         }
     });
 }
+
+// Export to global scope
+window.replaceEmojisWithIcons = replaceEmojisWithIcons;
 
 // Initialize immediately and on DOM ready
 function initIcons() {

@@ -126,19 +126,19 @@
 
             sorted.forEach((entry, index) => {
                 const rank = index + 1;
-                const colors = ['#FFD700', '#FF69B4', '#9370DB', '#4169E1'];
-                const color = colors[index] || '#666';
+                const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
+                const rankDisplay = rank <= 3 ? rank : `#${rank}`;
                 
                 const item = document.createElement('div');
                 item.className = 'leaderboard-entry';
                 item.innerHTML = `
-                    <div class="rank-number" style="color: ${color}">${rank}</div>
-                    <div class="rank-avatar">${entry.user.username?.[0] || '?'}</div>
+                    <div class="rank-number ${rankClass}">${rankDisplay}</div>
+                    <div class="rank-avatar">${entry.user.username?.[0]?.toUpperCase() || entry.user.display_name?.[0]?.toUpperCase() || '?'}</div>
                     <div class="rank-info">
                         <div class="rank-name">${entry.user.username || entry.user.display_name || 'Anonymous'}</div>
                         <div class="rank-scores">
-                            <span>${entry.wins} <span data-icon="star"></span></span>
-                            <span>${entry.totalValue.toFixed(2)} <span data-icon="diamond"></span></span>
+                            <span>${entry.wins} <span class="bat-icon" data-icon="bat"></span></span>
+                            <span>${entry.totalValue.toFixed(2)} <span class="diamond-icon" data-icon="diamond"></span></span>
                         </div>
                     </div>
                 `;
@@ -155,12 +155,12 @@
                     yourRankDiv.innerHTML = `
                         <div class="your-rank-box">
                             <div class="rank-number">#${yourEntry + 1}</div>
-                            <div class="rank-avatar">${currentUser.username?.[0] || '?'}</div>
+                            <div class="rank-avatar">${currentUser.username?.[0]?.toUpperCase() || currentUser.display_name?.[0]?.toUpperCase() || '?'}</div>
                             <div class="rank-info">
                                 <div class="rank-name">You</div>
                                 <div class="rank-scores">
-                                    <span>${sorted[yourEntry].wins} <span data-icon="star"></span></span>
-                                    <span>${sorted[yourEntry].totalValue.toFixed(2)} <span data-icon="diamond"></span></span>
+                                    <span>${sorted[yourEntry].wins} <span class="bat-icon" data-icon="bat"></span></span>
+                                    <span>${sorted[yourEntry].totalValue.toFixed(2)} <span class="diamond-icon" data-icon="diamond"></span></span>
                                 </div>
                             </div>
                         </div>
@@ -168,13 +168,13 @@
                 } else {
                     yourRankDiv.innerHTML = `
                         <div class="your-rank-box">
-                            <div class="rank-number">#?</div>
-                            <div class="rank-avatar">${currentUser.username?.[0] || '?'}</div>
+                            <div class="rank-number">#5960</div>
+                            <div class="rank-avatar">${currentUser.username?.[0]?.toUpperCase() || currentUser.display_name?.[0]?.toUpperCase() || 'G'}</div>
                             <div class="rank-info">
                                 <div class="rank-name">You</div>
                                 <div class="rank-scores">
-                                    <span>0 <span data-icon="star"></span></span>
-                                    <span>0 <span data-icon="diamond"></span></span>
+                                    <span>0 <span class="bat-icon" data-icon="bat"></span></span>
+                                    <span>0 <span class="diamond-icon" data-icon="diamond"></span></span>
                                 </div>
                             </div>
                         </div>

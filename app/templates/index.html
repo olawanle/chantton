@@ -26,7 +26,6 @@
     <!-- Wins Section -->
     <div class="wins-section">
         <h2 class="section-title">Wins</h2>
-        <button class="btn-close-small" onclick="closeWins()" data-icon="close"></button>
         <div class="wins-carousel" id="winsCarousel">
             <!-- Wins will be loaded here -->
         </div>
@@ -131,11 +130,16 @@
             data.wins.forEach(win => {
                 const card = document.createElement('div');
                 card.className = 'win-card';
+                const prizeImage = win.prize.meta?.image || '';
+                const prizeName = win.prize.name || 'Prize';
+                const userName = win.user.username || win.user.display_name || 'R Rubin';
                 card.innerHTML = `
-                    <div class="win-avatar">${win.user.username?.[0] || '?'}</div>
-                    <div class="win-info">
-                        <div class="win-name">${win.user.username || 'Anonymous'}</div>
-                        <div class="win-prize">${win.prize.name}</div>
+                    <div class="win-card-image">
+                        ${prizeImage ? `<img src="${prizeImage}" alt="${prizeName}">` : ''}
+                    </div>
+                    <div class="win-card-info">
+                        <div class="win-user-badge">R ${userName.split(' ')[0] || 'Rubin'}</div>
+                        <div class="win-prize-name">Win ${prizeName}</div>
                     </div>
                 `;
                 carousel.appendChild(card);
